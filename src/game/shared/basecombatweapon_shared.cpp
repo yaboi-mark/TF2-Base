@@ -1375,7 +1375,7 @@ bool CBaseCombatWeapon::ReloadOrSwitchWeapons( void )
 	{
 		// Weapon is useable. Reload if empty and weapon has waited as long as it has to after firing
 		if ( UsesClipsForAmmo1() && !AutoFiresFullClip() && 
-			 (m_iClip1 == 0) && 
+			 //(m_iClip1 == 0) && // required so we can do autofire
 			 (GetWeaponFlags() & ITEM_FLAG_NOAUTORELOAD) == false && 
 			 m_flNextPrimaryAttack < gpGlobals->curtime && 
 			 m_flNextSecondaryAttack < gpGlobals->curtime )
@@ -1685,6 +1685,9 @@ void CBaseCombatWeapon::ItemPostFrame( void )
 	//FIXME: Check for IN_ATTACK2 as well?
 	//FIXME: What if we're calling ItemBusyFrame?
 	m_fFireDuration = ( pOwner->m_nButtons & IN_ATTACK ) ? ( m_fFireDuration + gpGlobals->frametime ) : 0.0f;
+
+	if (pOwner->m_nButtons & IN_ATTACK)
+		m_bInReload = false;
 
 	if ( UsesClipsForAmmo1() )
 	{
@@ -2118,19 +2121,21 @@ char *CBaseCombatWeapon::GetDeathNoticeName( void )
 //====================================================================================
 void CBaseCombatWeapon::CheckReload( void )
 {
+	CBasePlayer *pOwner = ToBasePlayer(GetOwner());
+	if (!pOwner)
+		return;
+
+	if (pOwner->m_nButtons & (IN_ATTACK | IN_ATTACK2) && m_iClip1 > 0)
+	{
+		m_bInReload = false;
+		return;
+	}
+
 	if ( m_bReloadsSingly )
 	{
-		CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
-		if ( !pOwner )
-			return;
 
 		if ((m_bInReload) && (m_flNextPrimaryAttack <= gpGlobals->curtime))
 		{
-			if ( pOwner->m_nButtons & (IN_ATTACK | IN_ATTACK2) && m_iClip1 > 0 )
-			{
-				m_bInReload = false;
-				return;
-			}
 
 			// If out of ammo end reload
 			if (pOwner->GetAmmoCount(m_iPrimaryAmmoType) <=0)

@@ -312,7 +312,7 @@ void CHudBaseDeathNotice::FireGameEvent( IGameEvent *event )
 			if ( event->GetInt( "damagebits" ) & DMG_FALL )
 			{
 				// special case text for falling death
-				V_wcsncpy( m_DeathNotices[iMsg].wzInfoText, g_pVGuiLocalize->Find( "#DeathMsg_Fall" ), sizeof( m_DeathNotices[iMsg].wzInfoText ) );
+				//V_wcsncpy( m_DeathNotices[iMsg].wzInfoText, g_pVGuiLocalize->Find( "#DeathMsg_Fall" ), sizeof( m_DeathNotices[iMsg].wzInfoText ) ); //TODOMP: GODDAMIT WHY DOES THIS MAKE THE GAME CRASH ON FALLING DEATH
 			}
 			else if ( ( event->GetInt( "damagebits" ) & DMG_VEHICLE ) || ( 0 == Q_stricmp( m_DeathNotices[iMsg].szIcon, "d_tracktrain" ) ) )
 			{

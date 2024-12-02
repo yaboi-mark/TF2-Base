@@ -31,6 +31,9 @@ BEGIN_SIMPLE_DATADESC( CTakeDamageInfo )
 	DEFINE_FIELD( m_iDamagedOtherPlayers, FIELD_INTEGER),
 END_DATADESC()
 
+ConVar tea_vertical_explosion_knockback_increase("tea_vertical_explosion_knockback_increase", "8.0", FCVAR_CHEAT | FCVAR_NOTIFY | FCVAR_REPLICATED);
+ConVar tea_overall_explosion_knockback_increase("tea_overall_explosion_knockback_increase", "3.0", FCVAR_CHEAT | FCVAR_NOTIFY | FCVAR_REPLICATED);
+
 void CTakeDamageInfo::Init( CBaseEntity *pInflictor, CBaseEntity *pAttacker, CBaseEntity *pWeapon, const Vector &damageForce, const Vector &damagePosition, const Vector &reportedPosition, float flDamage, int bitsDamageType, int iCustomDamage )
 {
 	m_hInflictor = pInflictor;
@@ -313,12 +316,13 @@ void CalculateExplosiveDamageForce( CTakeDamageInfo *info, const Vector &vecDir,
 	// This simulates features that usually vary from
 	// person-to-person variables such as bodyweight,
 	// which are all indentical for characters using the same model.
-	flForceScale *= random->RandomFloat( 0.85, 1.15 );
+	//flForceScale *= random->RandomFloat( 0.85, 1.15 ); //nah, ill opt out for consistency. cry about it, dweeb.
 
 	// Calculate the vector and stuff it into the takedamageinfo
 	Vector vecForce = vecDir;
 	VectorNormalize( vecForce );
-	vecForce *= flForceScale;
+	vecForce *= flForceScale * tea_overall_explosion_knockback_increase.GetFloat();
+	vecForce.z += flForceScale * tea_vertical_explosion_knockback_increase.GetFloat();
 	vecForce *= phys_pushscale.GetFloat();
 	vecForce *= flScale;
 	info->SetDamageForce( vecForce );
@@ -369,7 +373,7 @@ void GuessDamageForce( CTakeDamageInfo *info, const Vector &vecForceDir, const V
 	}
 	else if ( info->GetDamageType() & DMG_BLAST )
 	{
-		CalculateExplosiveDamageForce( info, vecForceDir, vecForceOrigin, flScale );
+		CalculateExplosiveDamageForce( info, vecForceDir, vecForceOrigin, flScale * 3 );
 	}
 	else
 	{
