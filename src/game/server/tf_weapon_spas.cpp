@@ -1,11 +1,11 @@
-//====== Copyright Â© 1996-2005, Valve Corporation, All rights reserved. =======
+//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
 //=============================================================================
 
 #include "cbase.h"
-#include "tf_weapon_shotgun.h"
+#include "tf_weapon_spas.h"
 #include "decals.h"
 #include "tf_fx_shared.h"
 
@@ -41,18 +41,14 @@
 																	\
 	LINK_ENTITY_TO_CLASS( ##entityname##, C##WpnName## );			\
 	PRECACHE_WEAPON_REGISTER( ##entityname## );
-	
+
 
 //=============================================================================
 //
 // Weapon Shotgun tables.
 //
 
-CREATE_SIMPLE_WEAPON_TABLE( TFShotgun, tf_weapon_shotgun_primary )
-CREATE_SIMPLE_WEAPON_TABLE( TFShotgun_Soldier, tf_weapon_shotgun_soldier )
-CREATE_SIMPLE_WEAPON_TABLE( TFShotgun_HWG, tf_weapon_shotgun_hwg )
-CREATE_SIMPLE_WEAPON_TABLE( TFShotgun_Pyro, tf_weapon_shotgun_pyro )
-CREATE_SIMPLE_WEAPON_TABLE( TFScatterGun, tf_weapon_scattergun )
+CREATE_SIMPLE_WEAPON_TABLE(TFSpas, tf_weapon_spas)
 
 
 //=============================================================================
@@ -63,7 +59,7 @@ CREATE_SIMPLE_WEAPON_TABLE( TFScatterGun, tf_weapon_scattergun )
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-CTFShotgun::CTFShotgun()
+CTFSpas::CTFSpas()
 {
 	m_bReloadsSingly = true;
 }
@@ -71,13 +67,24 @@ CTFShotgun::CTFShotgun()
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CTFShotgun::PrimaryAttack()
+void CTFSpas::PrimaryAttack()
 {
-	if ( !CanAttack() )
+	if (!CanAttack())
 		return;
 
 	// Set the weapon mode.
 	m_iWeaponMode = TF_WEAPON_PRIMARY_MODE;
 
 	BaseClass::PrimaryAttack();
+}
+
+void CTFSpas::SecondaryAttack()
+{
+	if (!CanAttack())
+		return;
+
+	// Set the weapon mode.
+	m_iWeaponMode = TF_WEAPON_SECONDARY_MODE;
+
+	BaseClass::SecondaryAttack();
 }

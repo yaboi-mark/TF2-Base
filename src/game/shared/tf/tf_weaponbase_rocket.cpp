@@ -33,7 +33,7 @@ RecvPropQAngles( RECVINFO_NAME( m_angNetworkAngles, m_angRotation ) ),
 
 // Server specific.
 #else
-SendPropVector( SENDINFO( m_vInitialVelocity ), 12 /*nbits*/, 0 /*flags*/, -3000 /*low value*/, 3000 /*high value*/	),
+SendPropVector( SENDINFO( m_vInitialVelocity ), 12 /*nbits*/, 0 /*flags*/, -69420 /*low value*/, 69420 /*high value*/	),
 
 SendPropExclude( "DT_BaseEntity", "m_vecOrigin" ),
 SendPropExclude( "DT_BaseEntity", "m_angRotation" ),
@@ -125,7 +125,7 @@ void CTFBaseRocket::Spawn( void )
 
 	// Setup attributes.
 	m_takedamage = DAMAGE_NO;
-	SetGravity( 0.0f );
+	SetGravity( 100.0f );
 
 	// Setup the touch and think functions.
 	SetTouch( &CTFBaseRocket::RocketTouch );
@@ -133,7 +133,7 @@ void CTFBaseRocket::Spawn( void )
 	SetNextThink( gpGlobals->curtime );
 
 	// Don't collide with players on the owner's team for the first bit of our life
-	m_flCollideWithTeammatesTime = gpGlobals->curtime + 0.25;
+	m_flCollideWithTeammatesTime = gpGlobals->curtime + 30;
 	m_bCollideWithTeammates = false;
 
 #endif
@@ -202,7 +202,7 @@ int CTFBaseRocket::DrawModel( int flags )
 // Purpose: 
 //-----------------------------------------------------------------------------
 CTFBaseRocket *CTFBaseRocket::Create( const char *pszClassname, const Vector &vecOrigin, 
-									  const QAngle &vecAngles, CBaseEntity *pOwner )
+									  const QAngle &vecAngles, CBaseEntity *pOwner, float speed )
 {
 	CTFBaseRocket *pRocket = static_cast<CTFBaseRocket*>( CBaseEntity::Create( pszClassname, vecOrigin, vecAngles, pOwner ) );
 	if ( !pRocket )
@@ -218,7 +218,7 @@ CTFBaseRocket *CTFBaseRocket::Create( const char *pszClassname, const Vector &ve
 	Vector vecForward, vecRight, vecUp;
 	AngleVectors( vecAngles, &vecForward, &vecRight, &vecUp );
 
-	Vector vecVelocity = vecForward * 1100.0f;
+	Vector vecVelocity = vecForward * speed;
 	pRocket->SetAbsVelocity( vecVelocity );	
 	pRocket->SetupInitialTransmittedGrenadeVelocity( vecVelocity );
 
@@ -310,7 +310,7 @@ void CTFBaseRocket::Explode( trace_t *pTrace, CBaseEntity *pOther )
 		pAttacker = pScorerInterface->GetScorer();
 	}
 
-	CTakeDamageInfo info( this, pAttacker, vec3_origin, vecOrigin, GetDamage(), GetDamageType() );
+	CTakeDamageInfo info( this, pAttacker, vec3_origin, vecOrigin, GetDamage(), DMG_IGNITE, TF_DMG_CUSTOM_BURNING );
 	float flRadius = GetRadius();
 	RadiusDamage( info, vecOrigin, flRadius, CLASS_NONE, NULL );
 

@@ -1222,7 +1222,6 @@ void CControlPointProgressBar::SetupForPoint( CControlPointIcon *pIcon )
 		int iCappingTeam = ObjectiveResource()->GetCappingTeam( iCP );
 		int iOwnerTeam = ObjectiveResource()->GetOwningTeam( iCP );
 		int iPlayerTeam = pPlayer->GetTeamNumber();
-		bool bCapBlocked = ObjectiveResource()->CapIsBlocked( iCP );
 
 		if ( iCappingTeam != TEAM_UNASSIGNED && iCappingTeam != iOwnerTeam && iCappingTeam == iPlayerTeam )
 		{

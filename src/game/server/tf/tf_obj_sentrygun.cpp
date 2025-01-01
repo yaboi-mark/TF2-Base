@@ -118,7 +118,7 @@ ConVar tf_sentrygun_newtarget_dist("tf_sentrygun_newtarget_dist", "200", FCVAR_C
 ConVar tf_sentrygun_metal_per_shell("tf_sentrygun_metal_per_shell", "1", FCVAR_CHEAT | FCVAR_NOTIFY);
 ConVar tf_sentrygun_metal_per_rocket("tf_sentrygun_metal_per_rocket", "2", FCVAR_CHEAT | FCVAR_NOTIFY);
 ConVar tf_sentrygun_notarget("tf_sentrygun_notarget", "0", FCVAR_CHEAT | FCVAR_NOTIFY);
-ConVar tf_sentrygun_notarget("tf_sentrygun_range", "600", FCVAR_CHEAT | FCVAR_NOTIFY);
+ConVar tf_sentrygun_range("tf_sentrygun_range", "600", FCVAR_CHEAT | FCVAR_NOTIFY); //stock tf2 uses 1100. mostly noting this because this variable is actually custom
 
 extern ConVar tf_cheapobjects;
 
@@ -650,7 +650,7 @@ bool CObjectSentrygun::FindTarget()
 	// If we have an enemy get his minimum distance to check against.
 	Vector vecSegment;
 	Vector vecTargetCenter;
-	float flMinDist2 = 1100.0f * 1100.0f;
+	float flMinDist2 = pow(tf_sentrygun_range.GetFloat(),2);
 	CBaseEntity *pTargetCurrent = NULL;
 	CBaseEntity *pTargetOld = m_hEnemy.Get();
 	float flOldTargetDist2 = FLT_MAX;

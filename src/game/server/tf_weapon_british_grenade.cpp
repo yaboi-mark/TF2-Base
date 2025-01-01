@@ -1,11 +1,11 @@
-//====== Copyright Â© 1996-2005, Valve Corporation, All rights reserved. =======
+//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
 //=============================================================================
 
 #include "cbase.h"
-#include "tf_weapon_shotgun.h"
+#include "tf_weapon_british_grenade.h"
 #include "decals.h"
 #include "tf_fx_shared.h"
 
@@ -15,6 +15,7 @@
 // Server specific.
 #else
 #include "tf_player.h"
+#include "tf_gamestats.h"
 #endif
 
 #define CREATE_SIMPLE_WEAPON_TABLE( WpnName, entityname )			\
@@ -41,18 +42,14 @@
 																	\
 	LINK_ENTITY_TO_CLASS( ##entityname##, C##WpnName## );			\
 	PRECACHE_WEAPON_REGISTER( ##entityname## );
-	
+
 
 //=============================================================================
 //
 // Weapon Shotgun tables.
 //
 
-CREATE_SIMPLE_WEAPON_TABLE( TFShotgun, tf_weapon_shotgun_primary )
-CREATE_SIMPLE_WEAPON_TABLE( TFShotgun_Soldier, tf_weapon_shotgun_soldier )
-CREATE_SIMPLE_WEAPON_TABLE( TFShotgun_HWG, tf_weapon_shotgun_hwg )
-CREATE_SIMPLE_WEAPON_TABLE( TFShotgun_Pyro, tf_weapon_shotgun_pyro )
-CREATE_SIMPLE_WEAPON_TABLE( TFScatterGun, tf_weapon_scattergun )
+CREATE_SIMPLE_WEAPON_TABLE(TFBritishGrenade, tf_weapon_british_grenade)
 
 
 //=============================================================================
@@ -63,21 +60,68 @@ CREATE_SIMPLE_WEAPON_TABLE( TFScatterGun, tf_weapon_scattergun )
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-CTFShotgun::CTFShotgun()
+CTFBritishGrenade::CTFBritishGrenade()
 {
-	m_bReloadsSingly = true;
+	m_bReloadsSingly = false;
 }
 
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CTFShotgun::PrimaryAttack()
+void CTFBritishGrenade::PrimaryAttack()
 {
-	if ( !CanAttack() )
+	if (!CanAttack())
 		return;
 
 	// Set the weapon mode.
 	m_iWeaponMode = TF_WEAPON_PRIMARY_MODE;
 
 	BaseClass::PrimaryAttack();
+}
+
+void CTFBritishGrenade::SecondaryAttack()
+{
+	if (!CanAttack())
+		return;
+
+	// Set the weapon mode.
+	m_iWeaponMode = TF_WEAPON_SECONDARY_MODE;
+
+	BaseClass::SecondaryAttack();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFBritishGrenade::LaunchGrenade(void)
+{
+	// Get the player owning the weapon.
+	CTFPlayer *pPlayer = ToTFPlayer(GetPlayerOwner());
+	if (!pPlayer)
+		return;
+
+	CalcIsAttackCritical();
+
+	SendWeaponAnim(ACT_VM_PRIMARYATTACK);
+
+	pPlayer->SetAnimation(PLAYER_ATTACK1);
+	pPlayer->DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY);
+
+	FireProjectile(pPlayer);
+
+#if !defined( CLIENT_DLL ) 
+	pPlayer->SpeakWeaponFire();
+	CTF_GameStats.Event_PlayerFiredWeapon(pPlayer, IsCurrentAttackACrit());
+#endif
+
+	// Set next attack times.
+	m_flNextPrimaryAttack = gpGlobals->curtime + m_pWeaponInfo->GetWeaponData(m_iWeaponMode).m_flTimeFireDelay;
+
+	SetWeaponIdleTime(gpGlobals->curtime + SequenceDuration());
+
+	// Check the reload mode and behave appropriately.
+	if (m_bReloadsSingly)
+	{
+		m_iReloadMode.Set(TF_RELOAD_START);
+	}
 }

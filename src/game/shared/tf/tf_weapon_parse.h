@@ -25,6 +25,7 @@ struct WeaponData_t
 	float	m_flRange;
 	float	m_flSpread;
 	float	m_flPunchAngle;
+	float	m_flPunchAngleHorizontal;
 	float	m_flTimeFireDelay;				// Time to delay between firing
 	float	m_flTimeIdle;					// Time to idle after firing
 	float	m_flTimeIdleEmpty;				// Time to idle after firing last bullet in clip
@@ -36,6 +37,9 @@ struct WeaponData_t
 	float	m_flProjectileSpeed;			// Start speed for projectiles (nail, etc.); NOTE: union with something non-projectile
 	float	m_flSmackDelay;					// how long after swing should damage happen for melee weapons
 	bool	m_bUseRapidFireCrits;
+	float	m_flDeploySpeed;
+	float	m_flHolsterSpeed;
+	float	m_flFuseTime;
 
 	void Init( void )
 	{
@@ -44,6 +48,7 @@ struct WeaponData_t
 		m_flRange = 0.0f;
 		m_flSpread = 0.0f;
 		m_flPunchAngle = 0.0f;
+		m_flPunchAngleHorizontal = 0.0f;
 		m_flTimeFireDelay = 0.0f;
 		m_flTimeIdle = 0.0f;
 		m_flTimeIdleEmpty = 0.0f;
@@ -54,6 +59,9 @@ struct WeaponData_t
 		m_flProjectileSpeed = 0.0f;
 		m_flSmackDelay = 0.0f;
 		m_bUseRapidFireCrits = false;
+		m_flDeploySpeed = 0;
+		m_flHolsterSpeed = 0;
+		m_flFuseTime = 0;
 	};
 };
 

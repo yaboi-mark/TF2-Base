@@ -42,24 +42,22 @@ ConVar tf_spy_invis_time( "tf_spy_invis_time", "1.0", FCVAR_DEVELOPMENTONLY | FC
 ConVar tf_spy_invis_unstealth_time( "tf_spy_invis_unstealth_time", "2.0", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "Transition time in and out of spy invisibility", true, 0.1, true, 5.0 );
 
 ConVar tf_spy_max_cloaked_speed( "tf_spy_max_cloaked_speed", "999", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED );	// no cap
-ConVar tf_max_health_boost( "tf_max_health_boost", "1.5", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "Max health factor that players can be boosted to by healers.", true, 1.0, false, 0 );
-ConVar tf_invuln_time( "tf_invuln_time", "1.0", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "Time it takes for invulnerability to wear off." );
+ConVar tf_max_health_boost( "tf_max_health_boost", "1.5", FCVAR_CHEAT | FCVAR_REPLICATED, "Max health factor that players can be boosted to by healers.", true, 1.0, false, 0 );
+ConVar tf_invuln_time( "tf_invuln_time", "1.0", FCVAR_CHEAT | FCVAR_REPLICATED, "Time it takes for invulnerability to wear off." );
 
 #ifdef GAME_DLL
-ConVar tf_boost_drain_time( "tf_boost_drain_time", "15.0", FCVAR_DEVELOPMENTONLY, "Time is takes for a full health boost to drain away from a player.", true, 0.1, false, 0 );
-ConVar tf_debug_bullets( "tf_debug_bullets", "0", FCVAR_DEVELOPMENTONLY, "Visualize bullet traces." );
-ConVar tf_damage_events_track_for( "tf_damage_events_track_for", "30",  FCVAR_DEVELOPMENTONLY );
+ConVar tf_boost_drain_time( "tf_boost_drain_time", "15.0", FCVAR_CHEAT | FCVAR_NOTIFY, "Time is takes for a full health boost to drain away from a player.", true, 0.1, false, 0 );
+ConVar tf_debug_bullets( "tf_debug_bullets", "0", FCVAR_CHEAT, "Visualize bullet traces." );
+ConVar tf_damage_events_track_for( "tf_damage_events_track_for", "30",  FCVAR_CHEAT );
 #endif
 
-ConVar tf_useparticletracers( "tf_useparticletracers", "1", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "Use particle tracers instead of old style ones." );
-ConVar tf_spy_cloak_consume_rate( "tf_spy_cloak_consume_rate", "10.0", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "cloak to use per second while cloaked, from 100 max )" );	// 10 seconds of invis
-ConVar tf_spy_cloak_regen_rate( "tf_spy_cloak_regen_rate", "3.3", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "cloak to regen per second, up to 100 max" );		// 30 seconds to full charge
-ConVar tf_spy_cloak_no_attack_time( "tf_spy_cloak_no_attack_time", "2.0", FCVAR_DEVELOPMENTONLY | FCVAR_REPLICATED, "time after uncloaking that the spy is prohibited from attacking" );
+ConVar tf_useparticletracers("tf_useparticletracers", "1", FCVAR_CHEAT | FCVAR_REPLICATED, "Use particle tracers instead of old style ones.");
+ConVar tf_spy_cloak_consume_rate("tf_spy_cloak_consume_rate", "10.0", FCVAR_CHEAT | FCVAR_REPLICATED, "cloak to use per second while cloaked, from 100 max )");	// 10 seconds of invis
+ConVar tf_spy_cloak_regen_rate("tf_spy_cloak_regen_rate", "3.3", FCVAR_CHEAT | FCVAR_REPLICATED, "cloak to regen per second, up to 100 max");		// 30 seconds to full charge
+ConVar tf_spy_cloak_no_attack_time("tf_spy_cloak_no_attack_time", "2.0", FCVAR_CHEAT | FCVAR_REPLICATED, "time after uncloaking that the spy is prohibited from attacking");
 
 //ConVar tf_spy_stealth_blink_time( "tf_spy_stealth_blink_time", "0.3", FCVAR_DEVELOPMENTONLY, "time after being hit the spy blinks into view" );
 //ConVar tf_spy_stealth_blink_scale( "tf_spy_stealth_blink_scale", "0.85", FCVAR_DEVELOPMENTONLY, "percentage visible scalar after being hit the spy blinks into view" );
-
-ConVar tf_damage_disablespread( "tf_damage_disablespread", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles the random damage spread applied to all player damage." );
 
 #define TF_SPY_STEALTH_BLINKTIME   0.3f
 #define TF_SPY_STEALTH_BLINKSCALE  0.85f
@@ -913,22 +911,19 @@ void CTFPlayerShared::Burn( CTFPlayer *pAttacker )
 	if ( !m_pOuter->IsAlive() )
 		return;
 
-	// pyros don't burn persistently or take persistent burning damage, but we show brief burn effect so attacker can tell they hit
-	bool bVictimIsPyro = ( TF_CLASS_PYRO ==  m_pOuter->GetPlayerClass()->GetClassIndex() );
-
 	if ( !InCond( TF_COND_BURNING ) )
 	{
 		// Start burning
 		AddCond( TF_COND_BURNING );
 		m_flFlameBurnTime = gpGlobals->curtime;	//asap
 		// let the attacker know he burned me
-		if ( pAttacker && !bVictimIsPyro )
+		if ( pAttacker )
 		{
 			pAttacker->OnBurnOther( m_pOuter );
 		}
 	}
 	
-	float flFlameLife = bVictimIsPyro ? TF_BURNING_FLAME_LIFE_PYRO : TF_BURNING_FLAME_LIFE;
+	float flFlameLife = TF_BURNING_FLAME_LIFE;
 	m_flFlameRemoveTime = gpGlobals->curtime + flFlameLife;
 	m_hBurnAttacker = pAttacker;
 

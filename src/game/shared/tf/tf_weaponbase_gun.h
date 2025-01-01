@@ -60,6 +60,7 @@ public:
 	virtual float GetProjectileSpeed( void );
 
 	void UpdatePunchAngles( CTFPlayer *pPlayer );
+	void Think(void);
 	virtual float GetProjectileDamage( void );
 
 	virtual void ZoomIn( void );
