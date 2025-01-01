@@ -293,9 +293,6 @@ enum
 	TF_WEAPON_SENTRY_ROCKET,
 	TF_WEAPON_DISPENSER,
 	TF_WEAPON_INVIS,
-	TF_WEAPON_SPAS,
-	TF_WEAPON_DOUBLEBARREL,
-	TF_WEAPON_BRITISH_GRENADE,
 
 	TF_WEAPON_COUNT
 };
@@ -336,7 +333,8 @@ extern const char *g_szProjectileNames[];
 
 // Burning
 #define TF_BURNING_FREQUENCY		0.5f
-#define TF_BURNING_FLAME_LIFE		5
+#define TF_BURNING_FLAME_LIFE		10.0
+#define TF_BURNING_FLAME_LIFE_PYRO	0.25		// pyro only displays burning effect momentarily
 #define TF_BURNING_DMG				3
 
 // disguising

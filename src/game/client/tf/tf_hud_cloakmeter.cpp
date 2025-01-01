@@ -75,7 +75,7 @@ bool CHudSpyCloakMeter::ShouldDraw( void )
 {
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 
-	if ( !pPlayer )
+	if ( !pPlayer || !pPlayer->IsPlayerClass( TF_CLASS_SPY ) )
 	{
 		return false;
 	}

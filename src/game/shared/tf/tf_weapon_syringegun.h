@@ -42,7 +42,7 @@ public:
 
 private:
 
-	CTFSyringeGun( const CTFSyringeGun & ) { m_bReloadsSingly = true; }
+	CTFSyringeGun( const CTFSyringeGun & ) {}
 };
 
 #endif // TF_WEAPON_SYRINGEGUN_H

@@ -74,10 +74,7 @@ ConVar	sv_footsteps	( "sv_footsteps", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Pla
 ConVar	sv_rollspeed	( "sv_rollspeed", "200", FCVAR_NOTIFY | FCVAR_REPLICATED);
 ConVar	sv_rollangle	( "sv_rollangle", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Max view roll angle");
 #else
-ConVar	sv_airaccelerate("sv_airaccelerate", "35", FCVAR_NOTIFY | FCVAR_REPLICATED);
-ConVar	sv_airaccelerate_margin("sv_airaccelerate_margin", "0.1", FCVAR_NOTIFY | FCVAR_REPLICATED);
-ConVar	tea_q3airaccelerate(  "tea_q3accelerate", "2.25", FCVAR_NOTIFY | FCVAR_REPLICATED);    
-ConVar	tea_movementmode(  "tea_movementmode", "2", FCVAR_NOTIFY | FCVAR_REPLICATED, "0 - default source engine (sv_airaccelerate). 1 - quake 3 (tea_q3airaccelerate). 2 - default source engine and quake 3 simaltaneously, uses both variables for each, this is also found in CPMA. btw we stole this variable from open fortress.");    
+ConVar	sv_airaccelerate(  "sv_airaccelerate", "45", FCVAR_NOTIFY | FCVAR_REPLICATED);    
 ConVar	sv_wateraccelerate(  "sv_wateraccelerate", "10", FCVAR_NOTIFY | FCVAR_REPLICATED);     
 ConVar	sv_waterfriction(  "sv_waterfriction", "1", FCVAR_NOTIFY | FCVAR_REPLICATED);      
 ConVar	sv_footsteps	( "sv_footsteps", "1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Play footstep sound for players" );
@@ -99,7 +96,7 @@ ConVar	sv_backspeed	( "sv_backspeed", "0.6", FCVAR_ARCHIVE | FCVAR_REPLICATED, "
 ConVar  sv_waterdist	( "sv_waterdist","12", FCVAR_REPLICATED, "Vertical view fixup when eyes are near water plane." );
 #else
 ConVar	sv_bounce		( "sv_bounce","0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Bounce multiplier for when physically simulated objects collide with other objects." );
-ConVar	sv_maxvelocity	( "sv_maxvelocity","10000", FCVAR_REPLICATED, "Maximum speed any ballistically moving object is allowed to attain per axis." );
+ConVar	sv_maxvelocity	( "sv_maxvelocity","3500", FCVAR_REPLICATED, "Maximum speed any ballistically moving object is allowed to attain per axis." );
 ConVar	sv_stepsize		( "sv_stepsize","18", FCVAR_NOTIFY | FCVAR_REPLICATED);
 ConVar	sv_backspeed	( "sv_backspeed", "0.6", FCVAR_ARCHIVE | FCVAR_REPLICATED, "How much to slow down backwards motion" );
 ConVar  sv_waterdist	( "sv_waterdist","12", FCVAR_REPLICATED, "Vertical view fixup when eyes are near water plane." );
@@ -123,13 +120,5 @@ ConVar r_AirboatViewZHeight( "r_AirboatViewZHeight", "0.0", FCVAR_CHEAT | FCVAR_
 
 
 ConVar tea_bhop_dampen_start("tea_bhop_dampen_start", "1.0", FCVAR_CHEAT | FCVAR_NOTIFY | FCVAR_REPLICATED);
-ConVar tea_bhop_dampen_severity("tea_bhop_dampen_severity", "0.1", FCVAR_CHEAT | FCVAR_NOTIFY | FCVAR_REPLICATED);
-ConVar tea_airdash_zvel_influence("tea_airdash_zvel_influence", "1", FCVAR_CHEAT | FCVAR_NOTIFY | FCVAR_REPLICATED);
-ConVar tea_overspeed_friction("tea_overspeed_friction", "1", FCVAR_CHEAT | FCVAR_NOTIFY | FCVAR_REPLICATED);
-ConVar tea_overspeed_decreaseresist("tea_overspeed_decreaseresist", "1", FCVAR_CHEAT | FCVAR_NOTIFY | FCVAR_REPLICATED);
-ConVar tea_overspeed_start("tea_overspeed_start", "1", FCVAR_CHEAT | FCVAR_NOTIFY | FCVAR_REPLICATED);
-ConVar tea_flagcarrier_universal_accelerate_multiplier(" tea_flagcarrier_universal_accelerate_multiplier", "0.75", FCVAR_CHEAT | FCVAR_NOTIFY | FCVAR_REPLICATED);
-ConVar tea_flagcarrier_bhop_dampen_multiplier(" tea_flagcarrier_bhop_dampen_multiplier", "1.5", FCVAR_CHEAT | FCVAR_NOTIFY | FCVAR_REPLICATED);
-ConVar tea_slide_speed("tea_slide_speed", "2", FCVAR_CHEAT | FCVAR_NOTIFY | FCVAR_REPLICATED);
-ConVar tea_slide_accelerate("tea_slide_accelerate", "15", FCVAR_CHEAT | FCVAR_NOTIFY | FCVAR_REPLICATED);
-ConVar tea_slide_jumpboost("tea_slide_jumpboost", "1.5", FCVAR_CHEAT | FCVAR_NOTIFY | FCVAR_REPLICATED);
+ConVar tea_bhop_dampen_severity("tea_bhop_dampen_severity", "0.05", FCVAR_CHEAT | FCVAR_NOTIFY | FCVAR_REPLICATED);
+ConVar tea_airdash_zvel_influence("tea_bhop_dampen_start", "1", FCVAR_CHEAT | FCVAR_NOTIFY | FCVAR_REPLICATED);

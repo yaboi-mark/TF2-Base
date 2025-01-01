@@ -1639,7 +1639,7 @@ void CTFGameRules::ClientSettingsChanged( CBasePlayer *pPlayer )
 
 	const char *pszFov = engine->GetClientConVarValue( pPlayer->entindex(), "fov_desired" );
 	int iFov = atoi(pszFov);
-	iFov = clamp( iFov, 0, 180 );
+	iFov = clamp( iFov, 75, 90 );
 	pTFPlayer->SetDefaultFOV( iFov );
 }
 
@@ -2055,20 +2055,22 @@ void CTFGameRules::ClientDisconnected( edict_t *pClient )
 	BaseClass::ClientDisconnected( pClient );
 }
 
-ConVar	tea_fall_damage_threshold( "tea_fall_damage_threshold", "69420", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_CHEAT);
-ConVar	tea_fall_damage_multiplier( "tea_fall_damage_multiplier", "2", FCVAR_NOTIFY | FCVAR_REPLICATED | FCVAR_CHEAT);
+// Falling damage stuff.
+#define TF_PLAYER_MAX_SAFE_FALL_SPEED	650		
 
 float CTFGameRules::FlPlayerFallDamage( CBasePlayer *pPlayer )
 {
-	if ( pPlayer->m_Local.m_flFallVelocity > tea_fall_damage_threshold.GetFloat() )
+	if ( pPlayer->m_Local.m_flFallVelocity > TF_PLAYER_MAX_SAFE_FALL_SPEED )
 	{
 		// Old TFC damage formula
-		float flFallDamage = tea_fall_damage_multiplier.GetFloat() * (pPlayer->m_Local.m_flFallVelocity / 300);
+		float flFallDamage = 5 * (pPlayer->m_Local.m_flFallVelocity / 300);
 
 		// Fall damage needs to scale according to the player's max health, or
 		// it's always going to be much more dangerous to weaker classes than larger.
 		float flRatio = (float)pPlayer->GetMaxHealth() / 100.0;
 		flFallDamage *= flRatio;
+
+		flFallDamage *= random->RandomFloat( 0.8, 1.2 );
 
 		return flFallDamage;
 	}

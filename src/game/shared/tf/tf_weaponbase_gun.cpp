@@ -29,7 +29,6 @@
 
 #endif
 
-ConVar fov_scoped_multiplier("fov_scoped_multiplier", "0.5", FCVAR_ARCHIVE | FCVAR_USERINFO, "In short, a multiplier on your screen size during scoping.", true, 0, true, 1);
 //=============================================================================
 //
 // TFWeaponBase Gun tables.
@@ -86,8 +85,6 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 		return;
 
 	CalcIsAttackCritical();
-	
-	m_flLastWeaponFireTime = gpGlobals->curtime;
 
 #ifndef CLIENT_DLL
 	pPlayer->RemoveInvisibility();
@@ -128,7 +125,11 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 		SetWeaponIdleTime( gpGlobals->curtime + SequenceDuration() );
 	}
 
-	m_iReloadMode.Set( TF_RELOAD_START );
+	// Check the reload mode and behave appropriately.
+	if ( m_bReloadsSingly )
+	{
+		m_iReloadMode.Set( TF_RELOAD_START );
+	}
 }	
 
 //-----------------------------------------------------------------------------
@@ -136,68 +137,20 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 //-----------------------------------------------------------------------------
 void CTFWeaponBaseGun::SecondaryAttack( void )
 {
+	// semi-auto behaviour
+	if ( m_bInAttack2 )
+		return;
+
 	// Get the player owning the weapon.
 	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
 	if ( !pPlayer )
 		return;
 
-	// Are we capable of firing again?
-	if (m_flNextPrimaryAttack > gpGlobals->curtime)
-		return;
-
 	pPlayer->DoClassSpecialSkill();
 
-	// Check for ammunition.
-	if (m_iClip1 <= 0 && m_iClip1 != -1)
-		return;
+	m_bInAttack2 = true;
 
-	if (!CanAttack())
-		return;
-
-	CalcIsAttackCritical();
-
-	m_flLastWeaponFireTime = gpGlobals->curtime;
-
-#ifndef CLIENT_DLL
-	pPlayer->RemoveInvisibility();
-	pPlayer->RemoveDisguise();
-
-	// Minigun has custom handling
-	if (GetWeaponID() != TF_WEAPON_MINIGUN)
-	{
-		pPlayer->SpeakWeaponFire();
-	}
-	CTF_GameStats.Event_PlayerFiredWeapon(pPlayer, IsCurrentAttackACrit());
-#endif
-
-	// Set the weapon mode.
-	m_iWeaponMode = TF_WEAPON_SECONDARY_MODE;
-
-	SendWeaponAnim(ACT_VM_PRIMARYATTACK);
-
-	pPlayer->SetAnimation(PLAYER_ATTACK1);
-
-	FireProjectile(pPlayer);
-
-	// Set next attack times.
-	m_flNextPrimaryAttack = gpGlobals->curtime + m_pWeaponInfo->GetWeaponData(m_iWeaponMode).m_flTimeFireDelay;
-
-	// Don't push out secondary attack, because our secondary fire
-	// systems are all separate from primary fire (sniper zooming, demoman pipebomb detonating, etc)
-	//m_flNextSecondaryAttack = gpGlobals->curtime + m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flTimeFireDelay;
-
-	// Set the idle animation times based on the sequence duration, so that we play full fire animations
-	// that last longer than the refire rate may allow.
-	if (Clip1() > 0)
-	{
-		SetWeaponIdleTime(gpGlobals->curtime + SequenceDuration());
-	}
-	else
-	{
-		SetWeaponIdleTime(gpGlobals->curtime + SequenceDuration());
-	}
-
-	m_iReloadMode.Set(TF_RELOAD_START);
+	m_flNextSecondaryAttack = gpGlobals->curtime + 0.5;
 }
 
 CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
@@ -213,26 +166,23 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 		break;
 
 	case TF_PROJECTILE_ROCKET:
-		for (int i = 0; i < m_pWeaponInfo->GetWeaponData(m_iWeaponMode).m_nBulletsPerShot; i++)
-			pProjectile = FireRocket( pPlayer );
+		pProjectile = FireRocket( pPlayer );
 		pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
 		break;
 
 	case TF_PROJECTILE_SYRINGE:
-		for (int i = 0; i < m_pWeaponInfo->GetWeaponData(m_iWeaponMode).m_nBulletsPerShot; i++)
-			pProjectile = FireNail(pPlayer, iProjectile);
+		pProjectile = FireNail( pPlayer, iProjectile );
 		pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
 		break;
 
 	case TF_PROJECTILE_PIPEBOMB:
-		for (int i = 0; i < m_pWeaponInfo->GetWeaponData(m_iWeaponMode).m_nBulletsPerShot; i++)
-			pProjectile = FirePipeBomb(pPlayer, false);
+		for (int i = 0; i < 6; i++)
+			pProjectile = FirePipeBomb( pPlayer, false );
 		pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
 		break;
 
 	case TF_PROJECTILE_PIPEBOMB_REMOTE:
-		for (int i = 0; i < m_pWeaponInfo->GetWeaponData(m_iWeaponMode).m_nBulletsPerShot; i++)
-			pProjectile = FirePipeBomb( pPlayer, true);
+		pProjectile = FirePipeBomb( pPlayer, true );
 		pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
 		break;
 
@@ -246,18 +196,17 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 	if ( m_iClip1 != -1 )
 	{
 		m_iClip1 -= m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_iAmmoPerShot;
-		pPlayer->RemoveAmmo(m_pWeaponInfo->GetWeaponData(m_iWeaponMode).m_iAmmoPerShot, m_iPrimaryAmmoType);
 	}
 	else
 	{
-		//if ( m_iWeaponMode == TF_WEAPON_PRIMARY_MODE )
-		//{
+		if ( m_iWeaponMode == TF_WEAPON_PRIMARY_MODE )
+		{
 			pPlayer->RemoveAmmo( m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_iAmmoPerShot, m_iPrimaryAmmoType );
-		//}
-		//else
-		//{
-		//	pPlayer->RemoveAmmo( m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_iAmmoPerShot, m_iSecondaryAmmoType );
-		//}
+		}
+		else
+		{
+			pPlayer->RemoveAmmo( m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_iAmmoPerShot, m_iSecondaryAmmoType );
+		}
 	}
 
 	DoFireEffects();
@@ -276,21 +225,11 @@ void CTFWeaponBaseGun::UpdatePunchAngles( CTFPlayer *pPlayer )
 	QAngle angle = pPlayer->GetPunchAngle();
 	float flPunchAngle = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_flPunchAngle;
 
-	/*if ( flPunchAngle > 0 )
+	if ( flPunchAngle > 0 )
 	{
 		angle.x -= SharedRandomInt( "ShotgunPunchAngle", ( flPunchAngle - 1 ), ( flPunchAngle + 1 ) );
 		pPlayer->SetPunchAngle( angle );
-	}*/
-
-	float flPunchAngleTwo = m_pWeaponInfo->GetWeaponData(m_iWeaponMode).m_flPunchAngleHorizontal;
-	//if (SharedRandomInt("ShotgunPunchAngleTwoDirection", 0, 1, ) > 0.5) flPunchAngle *= -1;
-	angle.x -= flPunchAngle;
-	angle.y -= SharedRandomFloat("ShotgunPunchAngleTwo", flPunchAngleTwo * -1, flPunchAngleTwo);
-	pPlayer->SetPunchAngle(angle);
-}
-
-void CTFWeaponBaseGun::Think(void) {
-	BaseClass::Think();
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -392,12 +331,7 @@ CBaseEntity *CTFWeaponBaseGun::FireRocket( CTFPlayer *pPlayer )
 #ifdef GAME_DLL
 
 	Vector vecSrc;
-	QAngle angForward = pPlayer->EyeAngles();
-
-	float flSpread = m_pWeaponInfo->GetWeaponData(m_iWeaponMode).m_flSpread;
-
-	angForward.x += RandomFloat(-flSpread, flSpread);
-	angForward.y += RandomFloat(-flSpread, flSpread);
+	QAngle angForward;
 	Vector vecOffset( 23.5f, 12.0f, -3.0f );
 	if ( pPlayer->GetFlags() & FL_DUCKING )
 	{
@@ -405,7 +339,7 @@ CBaseEntity *CTFWeaponBaseGun::FireRocket( CTFPlayer *pPlayer )
 	}
 	GetProjectileFireSetup( pPlayer, vecOffset, &vecSrc, &angForward, false );
 
-	CTFProjectile_Rocket *pProjectile = CTFProjectile_Rocket::Create( vecSrc, angForward, pPlayer, pPlayer, m_pWeaponInfo->GetWeaponData( m_iWeaponMode).m_flProjectileSpeed );
+	CTFProjectile_Rocket *pProjectile = CTFProjectile_Rocket::Create( vecSrc, angForward, pPlayer, pPlayer );
 	if ( pProjectile )
 	{
 		pProjectile->SetCritical( IsCurrentAttackACrit() );
@@ -427,19 +361,18 @@ CBaseEntity *CTFWeaponBaseGun::FireNail( CTFPlayer *pPlayer, int iSpecificNail )
 
 	Vector vecSrc;
 	QAngle angForward;
+	GetProjectileFireSetup( pPlayer, Vector(16,6,-8), &vecSrc, &angForward );
 
 	// Add some spread
 	float flSpread = 1.5;
 	angForward.x += RandomFloat( -flSpread, flSpread );
 	angForward.y += RandomFloat( -flSpread, flSpread );
 
-	GetProjectileFireSetup(pPlayer, Vector(16, 6, -8), &vecSrc, &angForward);
-
 	CTFBaseProjectile *pProjectile = NULL;
 	switch( iSpecificNail )
 	{
 	case TF_PROJECTILE_SYRINGE:
-		pProjectile = CTFProjectile_Syringe::Create(vecSrc, angForward, pPlayer, pPlayer, IsCurrentAttackACrit(), m_pWeaponInfo->GetWeaponData(m_iWeaponMode).m_flProjectileSpeed);
+		pProjectile = CTFProjectile_Syringe::Create( vecSrc, angForward, pPlayer, pPlayer, IsCurrentAttackACrit() );
 		break;
 
 	default:
@@ -468,20 +401,14 @@ CBaseEntity *CTFWeaponBaseGun::FirePipeBomb( CTFPlayer *pPlayer, bool bRemoteDet
 #ifdef GAME_DLL
 
 	Vector vecForward, vecRight, vecUp;
-	QAngle angForward;
-
-	// Add some spread
-	float flSpread = 1.5;
-	angForward.x += RandomFloat(-flSpread, flSpread);
-	angForward.y += RandomFloat(-flSpread, flSpread);
-
-	AngleVectors( angForward, &vecForward, &vecRight, &vecUp );
+	AngleVectors( pPlayer->EyeAngles(), &vecForward, &vecRight, &vecUp );
 
 	// Create grenades here!!
 	Vector vecSrc = pPlayer->Weapon_ShootPosition();
 	vecSrc +=  vecForward * 36.0f + vecRight * 8.0f + vecUp * -6.0f;
 	
-	Vector vecVelocity = ( vecForward * GetProjectileSpeed() * 2.5 ) + ( vecUp * 200.0f );
+	Vector vecVelocity = ( vecForward * GetProjectileSpeed() * 2 ) + ( vecUp * 200.0f ) + ( random->RandomFloat( -10.0f, 10.0f ) * vecRight ) +		
+		( random->RandomFloat( -10.0f, 10.0f ) * vecUp );
 
 	CTFGrenadePipebombProjectile *pProjectile = CTFGrenadePipebombProjectile::Create( vecSrc, pPlayer->EyeAngles(), vecVelocity, 
 		AngularImpulse( 600, random->RandomInt( -1200, 1200 ), 0 ),
@@ -591,10 +518,10 @@ void CTFWeaponBaseGun::DoFireEffects()
 void CTFWeaponBaseGun::ToggleZoom( void )
 {
 	// Toggle the zoom.
-	CTFPlayer *pPlayer = ToTFPlayer(GetPlayerOwner());
+	CBasePlayer *pPlayer = GetPlayerOwner();
 	if ( pPlayer )
 	{
-		if( pPlayer->m_Shared.InCond(TF_COND_ZOOMED) )
+		if( pPlayer->GetFOV() >= 75 )
 		{
 			ZoomIn();
 		}
@@ -618,11 +545,9 @@ void CTFWeaponBaseGun::ZoomIn( void )
 	if ( !pPlayer )
 		return;
 
-	float scalar = fov_scoped_multiplier.GetFloat();
-	float base = pPlayer->GetFOV();
-
 	// Set the weapon zoom.
-	pPlayer->SetFOV(pPlayer, atan(tan(base * M_PI / 360.0) * scalar) / (M_PI / 360.0), 0.1f);// TODOMP: THIS IS PROBABLY WRONG, WE'LL SEE
+	// TODO: The weapon fov should be gotten from the script file.
+	pPlayer->SetFOV( pPlayer, TF_WEAPON_ZOOM_FOV, 0.1f );
 	pPlayer->m_Shared.AddCond( TF_COND_ZOOMED );
 }
 

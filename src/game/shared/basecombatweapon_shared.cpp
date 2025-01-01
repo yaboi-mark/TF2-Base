@@ -1697,13 +1697,18 @@ void CBaseCombatWeapon::ItemPostFrame( void )
 	bool bFired = false;
 
 	// Secondary attack has priority
-	if ( !bFired && (pOwner->m_nButtons & IN_ATTACK2) && (m_flNextPrimaryAttack <= gpGlobals->curtime) )
+	if ((pOwner->m_nButtons & IN_ATTACK2) && CanPerformSecondaryAttack() )
 	{
-		// Clip empty? Or out of ammo on a no-clip weapon?
-		if (!IsMeleeWeapon() &&
-			((UsesClipsForAmmo1() && m_iClip1 <= 0) || (!UsesClipsForAmmo1() && pOwner->GetAmmoCount(m_iPrimaryAmmoType) <= 0)))
-			HandleFireOnEmpty();
-		else if (pOwner->GetWaterLevel() == 3 && m_bAltFiresUnderwater == false) {
+		if (UsesSecondaryAmmo() && pOwner->GetAmmoCount(m_iSecondaryAmmoType)<=0 )
+		{
+			if (m_flNextEmptySoundTime < gpGlobals->curtime)
+			{
+				WeaponSound(EMPTY);
+				m_flNextSecondaryAttack = m_flNextEmptySoundTime = gpGlobals->curtime + 0.5;
+			}
+		}
+		else if (pOwner->GetWaterLevel() == 3 && m_bAltFiresUnderwater == false)
+		{
 			// This weapon doesn't fire underwater
 			WeaponSound(EMPTY);
 			m_flNextPrimaryAttack = gpGlobals->curtime + 0.2;
@@ -1724,13 +1729,16 @@ void CBaseCombatWeapon::ItemPostFrame( void )
 
 			SecondaryAttack();
 
-			if ( AutoFiresFullClip() )
+			// Secondary ammo doesn't have a reload animation
+			if ( UsesClipsForAmmo2() )
 			{
-				m_bFiringWholeClip = true;
+				// reload clip2 if empty
+				if (m_iClip2 < 1)
+				{
+					pOwner->RemoveAmmo( 1, m_iSecondaryAmmoType );
+					m_iClip2 = m_iClip2 + 1;
+				}
 			}
-#ifdef CLIENT_DLL
-			pOwner->SetFiredWeapon(true);
-#endif
 		}
 	}
 	

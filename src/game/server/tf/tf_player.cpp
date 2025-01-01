@@ -88,6 +88,7 @@ ConVar tf_max_voice_speak_delay( "tf_max_voice_speak_delay", "1.5", FCVAR_DEVELO
 extern ConVar spec_freeze_time;
 extern ConVar spec_freeze_traveltime;
 extern ConVar sv_maxunlag;
+extern ConVar tf_damage_disablespread;
 extern ConVar tf_gravetalk;
 extern ConVar tf_spectalk;
 
@@ -2389,8 +2390,7 @@ static float DamageForce( const Vector &size, float damage, float scale )
 	return force;
 }
 
-ConVar tf_debug_damage("tf_debug_damage", "0", FCVAR_CHEAT);
-ConVar tea_distancemod_neutral_dist("tea_distancemod_neutral_dist", "512", FCVAR_CHEAT, "In hammer units, the distance where neither rampup/falloff will be in effect.");
+ConVar tf_debug_damage( "tf_debug_damage", "0", FCVAR_CHEAT | FCVAR_DEVELOPMENTONLY );
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -2504,18 +2504,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	if ( info.GetAttacker() != this && !(bitsDamage & (DMG_DROWN | DMG_FALL)) ) 
 	{
 		float flDamage = 0;
-		bool isACrit = false;
-		if (bitsDamage & DMG_CRITICAL)
-			isACrit = true;
-		else if ((bitsDamage & DMG_IGNITE) * m_Shared.InCond(TF_COND_BURNING)) {
-			CTFWeaponBase *pWeapon = ToTFPlayer(info.GetAttacker())->GetActiveTFWeapon();
-			if (pWeapon) {
-				if (pWeapon->GetWeaponID() == TF_WEAPON_SHOTGUN_PYRO) {
-					isACrit = true;
-				}
-			}
-		}
-		if (isACrit)
+		if ( bitsDamage & DMG_CRITICAL )
 		{
 			if ( bDebug )
 			{
@@ -2565,7 +2554,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				if ( bitsDamage & DMG_USEDISTANCEMOD )
 				{
 					float flDistance = max( 1.0, (WorldSpaceCenter() - info.GetAttacker()->WorldSpaceCenter()).Length() );
-					float flOptimalDistance = tea_distancemod_neutral_dist.GetFloat();
+					float flOptimalDistance = 512.0;
 
 					flCenter = RemapValClamped( flDistance / flOptimalDistance, 0.0, 2.0, 1.0, 0.0 );
 					if ( bitsDamage & DMG_NOCLOSEDISTANCEMOD )
@@ -2586,7 +2575,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				}
 
 				//Msg("Range: %.2f - %.2f\n", flMin, flMax );
-				float flRandomVal = flCenter;
+				float flRandomVal = tf_damage_disablespread.GetBool() ? flCenter : RandomFloat( flMin, flMax );
 
 				if ( flRandomVal > 0.5 )
 				{
@@ -2600,6 +2589,11 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 							{
 								// Rocket launcher only has half the bonus of the other weapons at short range
 								flRandomDamage *= 0.5;
+							}
+							else if ( pWeapon->GetWeaponID() == TF_WEAPON_SCATTERGUN )
+							{
+								// Scattergun gets 50% bonus of other weapons at short range
+								flRandomDamage *= 1.5;
 							}
 							else if (pWeapon->GetWeaponID() == TF_WEAPON_SHOTGUN_PRIMARY)
 							{
@@ -2884,17 +2878,17 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 				// Sentryguns push a lot harder
 				if ( (info.GetDamageType() & DMG_BULLET) && info.GetInflictor()->IsBaseObject() )
 				{
-					vecForce = vecDir * -DamageForce( WorldAlignSize(), info.GetDamage(), 4 );
+					vecForce = vecDir * -DamageForce( WorldAlignSize(), info.GetDamage(), 16 );
 				}
 				else
 				{
 					vecForce = vecDir * -DamageForce( WorldAlignSize(), info.GetDamage(), tf_damageforcescale_other.GetFloat() );
 
-					/*if ( IsPlayerClass( TF_CLASS_HEAVYWEAPONS ) )
+					if ( IsPlayerClass( TF_CLASS_HEAVYWEAPONS ) )
 					{
-						// Heavies take less push from non sentryguns // you were saying???????? :exploding_boar_head:
+						// Heavies take less push from non sentryguns
 						vecForce *= 0.5;
-					}*/
+					}
 				}
 			}
 
